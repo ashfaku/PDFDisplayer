@@ -1,6 +1,6 @@
 {
   "name": "react-pdf-example",
-  "homepage": "https://ashfaku.github.io/drive_folder",
+  "homepage": "https://ashfaku.github.io/PDFDisplayer",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
@@ -12,7 +12,7 @@
     "react-pdf": "^5.7.1",
     "react-router": "^6.4.5",
     "react-router-dom": "^6.4.4",
-    "react-scripts": "5.0.0",
+    "react-scripts": "^5.0.0",
     "web-vitals": "^2.1.4"
   },
   "scripts": {
