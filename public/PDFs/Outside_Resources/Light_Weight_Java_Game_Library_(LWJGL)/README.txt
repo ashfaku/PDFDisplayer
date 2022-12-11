@@ -1,0 +1,1 @@
+Note: You should only try LWJGL if you have experience with Java Swing/FX libaries and/or OpenAL/OpenGL. 

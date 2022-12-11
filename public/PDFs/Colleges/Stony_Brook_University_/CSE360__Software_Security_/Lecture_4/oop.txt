@@ -1,0 +1,785 @@
+Object Oriented Programming (OOP)
+  So far the languages that we encountered treat data and computation
+    separately. In OOP, the data and computation are combined into
+    "object". This has several benefits:
+
+     -- more convenient: collects related information together, rather
+        than distributing it. 
+        Example: C++ iostream class collects all I/O related operations
+        together into one central place. In contrast, the I/O library in C 
+        consists of many distinct functions such as getchar, printf,
+        scanf, sscanf, etc.
+
+     -- centralizes and regulates access to data. 
+        If there is an error in the program that
+        corrupts object data, we need to look for the error only within the
+        computations (aka member functions) associated with the object.
+        Contrast this with the typical situation in C programs: access and
+        updates to fields of a datastructure are distributed all through
+        the program, so we need to scan all of a program to identify potential
+        errors.
+
+     -- promotes reuse. 
+        (a) by separating interface from implementation. The implementation
+            of the member functions is irrelevant from the point of view
+            of clients of the object. (Client code = code that uses an
+            object and its member functions.) Thus, we can replace the
+            implementation of an object very easily, without making any
+            changes to client code. Contrast this with C, where the
+            implementation of a datastructure such as a linked list is
+            integrated into the client code, making such changes very
+            difficult if not impossible.
+        (b) by permitting extension of new objects via inheritance.
+            Inheritance allows a new class (class = type of an object)
+            to reuse the features of an existing class. For instance,
+            one may define a doubly linked integer list class by inheriting
+            an reusing the functions provided by a singly linked list class.
+
+The aspect of "centralizing/regulating access to data" is generally
+called encapsulation; the aspect of separating implementation of an
+object from its interface is generally called "information hiding." 
+Note that these two terms overlap to some extent.
+
+  In object-oriented languages (OOL), class is a type and includes data
+    and operations together. An object is an instance of class. It
+    specifies members, which consists of variables and functions. The
+    member variables are of two types: class variables or static variables
+    and instance variables. Each object has its own copy of instance
+    variables, whereas class variables are shared across all objects of a
+    class. Instance variables are similar to field names of a struct,
+    e.g., if a C-structure has a field called a, and b and c are structure
+    variables of this type, b.a and c.a refer to distinct locations in
+    memory. Class variables, on the other hand, are similar to global
+    variables. (Access to these variables may still be restricted using
+    the private or protected keyword to the member function.)
+
+    Similarly, member functions are of two types:
+    statically dispatched (or statically bound) and dynamically dispatched
+    (or dynamically bound). The statically dispatched functions are
+    declared using the keyword "static" whereas the dynamically dispatched
+    functions are declared using the keyword "virtual".
+
+   Access to members of an object is regulated in C++ using three
+   keywords: private, protected and public. Private members can be
+   accessed only by member functions associated with the class. They
+   may not be directly accessed by outside functions. A protected 
+   designation is a bit less restrictive: it allows the member functions
+   of any subclass of a given class to access such members. The public
+   keyword identifies those members that can be called directly by
+   any piece of code. 
+
+   A typical convention is C++ is to make all data members private. 
+   Most member functions are public. 
+
+    e.g., consider a list that consists of integers. The declaration
+     for this could be :
+      class IntList {
+         private: 
+           int elem;  // element of the list
+           IntList *next ; // pointer to next element in the list
+        public:
+           IntList (int first) ; // this function (that has the same
+                                 // name as the class) is called
+                                 // "constructor". It is called
+                                 // automatically when a new object of 
+                                 // this class is created.
+           ~IntList () ; // this function (that has ~ and the class
+                         // name) is called "destructor". It is called 
+                         // automatically when an object of this class 
+                         // is about to be destroyed.
+            void insert (int i) ; // insert element i
+            int getval () ; // return the value of elem
+            IntList *getNext (); // return the value of next
+       }
+
+   We may define a subclass of IntList that uses doubly linked lists 
+   as follows:
+
+     class IntDList : IntList { // this denotes that IntDList inherits 
+                                // from class IntList
+       private:
+         IntList *prev ; // pointer to previous element, the pointer
+                         // to next element and element itself are in IntList
+       public:
+         IntDlist(int first); // Constructors need to be redefined
+         ~IntDlist(); // Destructors need not be redefined, but typically
+                      // this is needed in practice. In particular, a 
+                      // destructor may need to free up storage allocated to 
+                      // pointers. Since Dlist uses an additional pointer,
+                      // additional free operations may be needed, and hence
+                      // the need for a new destructor.
+         // Most operations, such as getval and getNext are inherited 
+         // from IntList.
+         insert (int) ;
+         // But some operations, such as insert, may have to be redefined.
+         // An insert operation now has to update two pointers, instead of one.
+         // Also, we need an accessor for the previous pointer.
+         IntDList *prev();
+      }
+
+
+   A key principle that applies to OOL is as follows:
+   "In any operation that expects an object of type T, it is acceptable 
+   to supply object of type T', where T' is subtype of T".
+   This subtype principle must be strictly adhered to. 
+   The subtype principle enables OOL to support
+   subtype polymorphism: the same piece of code can be reused with 
+   different types of objects, as long as they all belong to subtypes of
+   a base type. For instance, the following function will work with
+   any object whose type is a subtype of IntList.
+
+      void q (IntList &i, int j) {
+           ...
+           i.insert (j) ; 
+      }
+
+   When we apply the subtype principle, we require that q work properly,
+   regardless of whether it was called with an IntList or IntDList argument.
+   However, note that we said the insert operation works differently on
+   these two types. Use of IntList::insert on IntDList object will likely
+   corrupt it, since the prev pointer would not have been appropriately
+   initialized. Thus, in order for the subtype principle to be observed,
+   it is essential that i.insert refer to IntList::insert when i is
+   an IntList object, and IntDList::insert function when i is an
+   IntDList. This requires a dynamic association between the name "insert"
+   and the its implementation. This sort of dynamic binding is achieved
+   in C++ by declaring a function be virtual. Thus the definition of
+   insert in IntList should be modified as follows:
+
+            virtual void insert(int i) ; // insert element i
+
+    Note that with dynamic binding, we are getting the effect of 
+    overloading rather than parametric polymorphism. In particular,
+    the insert function implementation is not being shared across
+    subtypes of IntList, but its name is shared. This enables
+    client code to be reused regardless of the argument type, but
+    the implementation of insert function is different between 
+    IntList and IntDList for reasons mentioned above. (To see 
+    dynamic binding as overloading, we need to eliminate the
+    "syntactic sugar" used for calling member functions in OOL:
+    instead of viewing it as i.insert(...), we whould think of it
+    as a simple function insert(i,...) that explicitly takes an
+    object as an argument.)
+
+The key properties of OOL are:
+(a) encapsulation
+(b) inheritance+dynamic binding
+
+One of the main benefits of OO-style is reuse of code. Reuse is
+achieved through subtype polymorphism, i.e., 
+the same piece of code can operate on objects of different type,
+as long as:
+
+(a) their types are derived from a common base class
+(b) the code assumes only fields and operations supported by the
+    base class.
+
+(As we will discuss later, subtype polymorphism is based on the fact that
+all subclasses of a base class support the operations declared in the base
+class, although their implementations may be differ across the subclasses.
+This notion of same-name-but-different-function is nothing by function
+overloading that we have discussed before. One difference in this context
+is that the overloading is resolved at runtime, rather than at compile
+time.
+
+This observation leads us to the following conclusion regarding
+reuse enabled by subtype polymorphism: just as overloading enables
+reuse of client code, subtype polymorphism enables reuse of client
+code.)
+
+The following example embodies the essence of reuse enabled in OO-languages.
+Consider a graphical editor program. Consider the implementation of one
+of the functions to be supported by this program, namely, that of redrawing
+the screen. Conceptually, this is a very simple operation: we simply
+need to sequence through all of the objects on the screen and redraw them.
+
+This conceptual description can be realized in an OO-language as follows.
+First, we define a base class called DrawableOblect that supports operations
+that are common to all objects that can be drawn on the screen. These 
+operations may include draw() and erase(). Since the actual implementation
+of these operations will differ across different kinds of graphical objects,
+we cannot provide an implementation of this method in the base class. Thus,
+DrawableObject just defines an interface: no implementations for the methods
+are provided. The subclasses of this class can provide the implementations
+of these methods. We use the terms "abstract method", "deferred method" 
+and "pure virtual function" to refer to such methods whose definition is 
+not provided in a base class. We also use the term "abstract" class to
+refer to classes that have one or more abstract methods. (The reason
+for this name is that we cannot create objects of with such a type,
+since such an object will not provide implementations of some methods.)
+A class that consists of only abstract methods (and no data members)
+is called an interface class. 
+
+
+The hierarchy of DrawableObject may look as follows:
+
+                              DrawableObject
+                                  /     \
+                                 /       \
+                                /
+                               /
+                    GeometricShapes      BitMaps
+                       /    \               /\
+                      /      \             /  \
+            ClosedFigures  OpenFigures    /    \
+            /         \       ...       JPEG  GIF
+           /           \
+        Polygon     Ellipse
+        /     \        |
+       /       \     Circle
+     Rectangle Triangle
+       |
+       |
+     Square
+
+The subclasses support the draw() and erase() operation supported by
+the base class. In addition, they may support additional operations:
+for instance, the ClosedFigures class may support operations such as
+center(), area(), etc. 
+
+Given this setting, we can implement the redraw routine using the
+following code fragment:
+
+void redraw(DrawableObject* objList[], int size) {
+     for (int i = 0; i < size; i++)
+         objList[i]->draw();
+}
+
+Note that due to the nature of dynamic dispatching of virtual functions,
+objList[i].draw will call the appropriate draw method: for a square 
+object, Square::draw will be called, while for a circle object,
+Circle:draw will be called.
+
+Most important, the above code need not be changed even if we modify the
+inheritance hierarchy by adding new subtypes. For instance, we may add a 
+new kind of object, say a Hexagon. We need only provide the implementation of
+draw() and r draw() for that class. The above redraw() function need
+not be changed at all!
+
+Without OO-languages, this sort of reuse is difficult to achieve. For
+instance, if we were to implement the graphical editor in C, we may
+use the following code to implement redraw:
+
+void redraw(DrawableObject *objList[], int size) {
+    for (int i = 0; i < size; i++) {
+        switch (objList[i]->type) {
+        case SQUARE: square_draw((struct Square *)objList[i]);
+                     break;
+        case CIRCLE: circle_draw((struct Circle *)objList[i]);
+                     break;
+        ........
+        default: ....
+    }
+}
+
+The key difference in this code is that no reuse is possible across
+different types such as Circle and Square: we have to explicitly check
+the type of the object at runtime, and explicitly invoke the operation
+appropriate for that type. A consequence of this is that the code for
+redraw needs to be changed any time we want to add a new type of 
+DrawableObject, such as a Hexagon.
+
+Subtype: A is a subtype of B if every object of type A is also a B,
+         i.e., every object of type A has
+               (1) all of the data members of B'
+               (2) supports all of the operations supported by B,
+                   with the operations taking the same argument types
+                   and returning the same type
+               (3) AND these operations and fields have the 
+                  "same meaning" in A and B
+
+It is common to view data field accesses as operations in their
+own right. In that case, (1) is subsumed by (2) and (3). 
+
+Inheritance is a language mechanism in OO languages that can
+be used to implement subtypes. In particular, the notion of 
+interface inheritance corresponds (1), (2) and (3) above, with
+the provision that (3) is not checked or enforced by a compiler.
+Nevertheless, it is a bad programming practice to violate (3).
+
+Note: In the practice OO-programming, "same meaning" (as in (3)) does not
+mean that an operation denotes the same mathematical function in
+A and B. Instead, "same" is interpreted as "analagous" or "parallel."
+For instance, we may have a "draw" operation that is used to display
+objects of type DrawableObject, but the actual figures drawn by
+this method will be quite different for different subclasses such
+as Circle and Square. 
+
+Based on the above discussion, it follows that the notion of subtyping
+and interface inheritance coincide in OO languages. Another way to
+phrase this is to say that "interface inheritance captures an
+`is-a' relationsship." In otherwords, if A inherits B's interface,
+then it must be the case that every A is a B. As mentioned before,
+interface inheritance enables reuse of client code: in particular,
+code that operates on objects of type B can continue to be used
+on objects of type A without amy change. (Recall the "refresh"
+function in the graphics editor example.)
+
+A different notion of inheritance supported in OO-languages is
+implementation inheritance. If A is implemented using B, then we that
+there is an implementation inheritance relationship between A and B. Note,
+however, that A need not support any of the operation supported by B. In
+otherwords, the use of B in A's implementation is purely based on
+convenience, and not because of any similarities among the semantics of A
+and B. Specifically, there is no is-a relationship between the two
+classes. As such, implementation inheritance does not help in reuse of
+client code -- implementation inheritance is thus "irrelevant" from the
+point of view of client code. For this reason, private inheritance in C++
+corresponds to implementation-only inheritance, while public inheritance
+provides both implementation and interface inheritance.
+
+Since implementation-only inheritance is invisible outside a class,
+it is not as useful as interface inheritance. In particular, we can
+simulate implementation-only inheritance using composition. For instance,
+consider the following example:
+
+class B {
+  op1(...)
+  op2(...)
+}
+
+class A: private class B {
+  op1(...) /* Some operations supported in B may also be supported by A */
+  op3(...) /* New operations supported by A */
+}
+
+Now, since the inheritance is invisible to clients of A, they cannot 
+access the op1 operation supported by B. They can only access op1
+supported by A. More concretely, this means that even if A wishes to
+reuse op1's implementation provided by B, it cannot do this implicitly.
+Instead, the implementation of op1 in A has to explicitly invoke the
+implementation of op1 in B:
+
+A::op1(...) {
+    B::op1(...)
+}
+
+For this reason, we can simulate implementation inheritance using 
+composition as follows:
+
+class A' {
+      B b;
+      op1(...) {
+        b.op1(...)
+      }
+      op3(...)
+}
+
+As such, implementation-only inheritance is not very useful, and has been
+eliminated in Java. From a practitioner's view, use of implementation-only
+inheritance is unusual. When it occurs, it is often a mistake, and 
+composition would have been more appropriate.
+
+Parametric polymorphism Vs Interface Inheritance
+-------------------------------------------------
+
+In C++, template classes support parametric polymorphism, while 
+public inheritance support interface+implementation inheritance.
+Parametric polymorphism is more flexible in many cases. For instance,
+consider the design of a list class using template types. We can
+do this by:
+
+template class List<class ElemType> {
+ private:
+   ElemType *first;
+   List<ElemType> *next;
+ public:
+   ElemType *get();
+   void insert(ElemType *e);
+   ...
+}
+
+Now, one can use the List class with any element type:
+
+void f(List<A> alist, List<B> blist) {
+     A a = alist.get();
+     B b = blist.get();
+     ....
+}
+
+Note that the variable a's type can be statically determined to 
+be A, and appropriate typechecking performed at compile time.
+While subtype polymorphism can support the definition of a List
+class, this type-checking ability is lost. In more detail: To
+use subtype polymorphism, we need to have a common base class 
+for A and B, and define a List class that contains objects of 
+this type. Specifically, in Java, we do this by making all
+objects derive from a base class called Object:
+
+class AltList {
+ private:
+  Object first; // Note: all object fields really denote pointers
+  AltList next; // in java
+ public:
+  Object get();
+  void insert(Object o);
+}
+
+void f(AltList alist, AltList blist) {
+  A a = (A)alist.get();
+  B b = (B)blist.get();
+  ...
+}
+
+Note that in this case, the operation alist.get() returns an
+object of type Object, not A. We therefore need to explicitly cast it into
+an object of type A or B as appropriate. Moroever, the type-correctness
+of this casting cannot be verified until runtime. This leads to
+two problems: (a) type-checking needs to be done at runtime, and
+type info maintained at runtime, (b) potential errors, as in the following
+code, cannot be caught at compile time
+
+List alist, blist;
+A a; A b; // Note b is of type A, not B
+alist.insert(a);
+blist.insert(b);
+f(alist, blist); // f expects second arg to be list of B's, but we are
+                 // giving a list of A's.
+
+Overloading, Overriding, and Virtual Functions
+-----------------------------------------------
+
+Overloading is the ability to use the same function NAME with 
+different arguments to denote DIFFERENT functions. In C++, for
+instance, once can define:
+
+void add(int a, int b, int& c);
+void add(float a, float b, float& c);
+
+Overriding refers to the fact that an implementation of a method
+in a subclass supercedes the implementation of the same method in 
+the base class. 
+
+OVERRIDING OF NON-VIRTUAL FUNCTIONS IN C++
+
+For instance:
+
+class B {
+   ...
+ public:
+   void op1(int i) {
+     /* B's implementation of op1 */
+   }
+   ...
+}
+
+class A: public class B {
+   ...
+ public: 
+   void op1(int i) {
+     /* A's implementation of op1 */
+   }
+   ...
+}
+
+main() {
+  B b;
+  A a;
+  int i = 5;
+  b.op1(i); // B's implementation of op1 is used
+  a.op1(i); // Although every A is a B, and hence B's implementation of
+            // op1 is available to A, A's definition supercedes B's defn,
+            // so we are using A's implementation of op1.
+
+  ((B)a).op1(); // Now that a has been cast into a B, B's op1 applies.
+  a.B::op1();   // Explicitly calling B's implementation of op1
+}
+
+One thing to note in the above example is that the choice of B's or A's
+version of op1 to use is based on compile-time type of a variable or
+expression. The runtime type is not used. Thus, overriding of method
+definitions is based on compile-time type information. This is illustrated
+in the following function f,
+
+void f(B x, int i) {
+     x.op1(i);
+}
+
+which may be invoked as follows:
+
+B b;
+A a;
+f(b, 1); // f uses B's op1
+f(a, 1); // f still uses B's op1, not A's
+
+OVERRIDING IN THE PRESENCE OF VIRTUAL FUNCTION
+
+Use of virtual functions would enable overriding to be based on runtime type
+information:
+
+class B {
+   ...
+ public:
+   virtual void op1(int i) {
+     /* B's implementation of op1 */
+   }
+   ...
+}
+
+class A: public class B {
+   ...
+ public: 
+   void op1(int i) {// op1 is virtual in base class, so it is virtual here too 
+     /* A's implementation of op1 */
+   }
+   ...
+}
+
+main() {
+  B b;
+  A a;
+  int i = 5;
+  b.op1(i); // B's implementation of op1 is used
+  a.op1(i); // A's implementation of op1 is used.
+
+  ((B)a).op1(); // Although A has been cast into a B, dispatching of
+                // virtual function is based on the runtime type info 
+                // associated with a. Thus, A's op1 is used. 
+                // NOTE difference with nonvirtual case 
+
+  a.B::op1();   // Explicitly calling B's implementation of op1.
+                // Disable dynamic dispatching of op1
+}
+
+Also, in the second example, things work as expected, based on runtime
+type info:
+
+void f(B x, int i) {
+     x.op1(i);
+}
+
+which may be invoked as follows:
+
+B b;
+A a;
+f(b, 1); // f uses B's op1
+f(a, 1); // f uses A's op1
+
+Note that op1 denotes different funtions in the context of A and B.
+Thus, we are overloading the name "op1" with two different meanings.
+Reuse of client code, as enabled in OO languages, relies simply
+on this fact that the same function name will do the "right thing"
+depending on the runtime type.
+
+The right version can be determined using the argument types:
+If the object argument is of type A, then we use A's version of
+op1, and if it is of type B, then we use B's version of op1.
+With nonvirtual functions, the resolution of op1 is done at compile
+time, while with virtual functions, resolution is done at runtime.
+
+Implementation Aspects of OO-Languages
+---------------------------------------
+
+Allocation of space for data members: The space for data members is 
+laid out the same way it is done for structures in C or other languages.
+Specifically:
+ -- the data members are allocated next to each other
+ -- some padding may be required in between fields, if the
+    underlying machine architecture requires primitive types to
+    be aligned at certain adresses
+ -- at runtime, there is no need to look up the name of a field and
+    identify the corresponding offset into a structure; instead, we
+    can statically translate field names into relative addresses,
+    with respect to the beginning of the object.
+ -- data members for a derived class immediately follow the data
+    members of the base class
+ -- multiple inheritance requires more complicated handling, we
+    will not discuss it here
+
+Example:
+
+class B {
+      int i;
+      double d;
+      char c;
+      float f;
+}
+
+Layout of objects of type b:
+     ---------------
+  0: | int i       | // Assumption: Integer requires 4 bytes
+     ---------------
+  4: | XXXXXXXXXXX | // pad, assuming double's are to be 
+     --------------- // aligned on 8-byte boundaries
+  8: | double d    |
+     |             | // Assumption: Double requires 8 bytes
+     ---------------
+ 16: | char c|XXXXX| // Assumption: char needs 1 byte, 3 bytes are padded
+     ---------------
+ 20: | float f     | // Assumption: float to be aligned on 4-byte boundaries,
+     --------------- // and require 4-bytes of space.
+
+class C {
+  int k, l;
+  B b;
+}
+
+     ---------------
+  0: | int k       |
+     ---------------
+  4: | int l       |
+     ---------------
+  8: | int i       |
+     ---------------
+ 12: | XXXXXXXXXXX |
+     ---------------
+ 16: | double d    |
+     |             |
+     ---------------
+ 24: | char c|XXXXX|
+     ---------------
+ 28: | float f     |
+     ---------------
+
+class D: public C {
+   double x;
+}
+
+     ---------------
+  0: | int k       |
+     ---------------
+  4: | int l       |
+     ---------------
+  8: | int i       |
+     ---------------
+ 12: | XXXXXXXXXXX |
+     ---------------
+ 16: | double d    |
+     |             |
+     ---------------
+ 24: | char c|XXXXX|
+     ---------------
+ 28: | float f     |
+     ---------------
+ 32: | double x    |
+     |             |
+     ---------------
+
+Implementation of Virtual Functions
+------------------------------------
+
+Approach 1: Lookup type info at runtime, and then call the function
+   defined by that type.
+   Problem: very expensive, require type info to be maintained at runtime
+
+Approach 2: Treat function members like data members: Allocate storage for
+   them within the object. Put a pointer to the function in this location,
+   and translate calls to the function to make an indirection through this
+   field.
+   Benefit: No need to maintain type info at runtime. Implementation of
+   virtual methods is fast, as it requires only a dereferencing of the
+   field that stores the pointer to member funtion to be invoked.
+   Problem: Potentially lot of space is wasted for each object, even though
+   all objects of the same class have identical values for the table.
+
+Approach 3: Introduce additional indirection into approach 2: Store a pointer
+   to a table in the object, and this table holds the actual pointers to
+   virtual functions. Now we use only one word of storage in each object.
+
+class B {
+   int i ;
+   char c ;
+   virtual void g();
+   virtual void h() ;
+  }
+
+  B b1, b2;
+
+      b1:
+       +-------------+
+       |    i        |
+       |-------------|
+       |    c        |
+       |-------------|
+       | VMT ptr  ---|----------------+
+       +-------------+                |
+                                      |
+                                      |
+                                      |            Virtual Method Table (VMT)
+                                      |                 for class B
+                                      |                 +-------------+
+                                      +---------------->|ptr to B's g |
+                                      |                 |-------------|
+                                      |                 |ptr to B's h |
+      b2:                             |                 |-------------|
+       +-------------+                |
+       |    i        |                |
+       |-------------|                |
+       |    c        |                |
+       |-------------|                |
+       | VMT ptr  ---|----------------+
+       +-------------+                
+
+Impact of subtype principle on Implementation of OO-Languages
+-------------------------------------------------------------
+
+The subtype principle requires that any piece of code that operates on
+an object of type B can work "as is" when given an object belonging
+to a subclass of B. This implies that runtime representation used for
+objects of a subtype A must be compatible with those for objects of
+the base type B. 
+
+Note that the way the fields of an object are accessed at runtime is
+using an offset from the start address for the object. For instance,
+b1.i will be accessed using an expression of the form (we use C-like
+syntax here)
+       *(&b1+0)
+where 0 is the offset corresponding to the field i. Similarly, the field
+b1.c will be accessed using the expression
+       *(&b1+1)
+(This assumes that addresses are given in terms of words, and a single
+word of memory can store an integer variable. If we use byte addressing
+instead, and if all integers require 4 bytes, then the access would use
+an expression of the form *(&b1+4).)
+
+Similarly, an invocation of the virtual member function b1.h() will be 
+implemented at runtime using an instruction of the form:
+   call *(*(&b1+2)+1)
+where:
+    &b1+2 gives the location where the VMT ptr is located
+    *(&b1+2) gives the value of the VMT ptr, which corresponds
+             to the location of the VMT table
+    *(&b1+2) + 1 yields the location within the VMT table where the
+             pointer to virtual function h is stored. (Note that the
+             pointer to h is stored at offset 1 from the base of VMT.)
+
+Viewed in light of the way member fields and operations are accessed,
+the subtype principle imposes the following constraint:
+    any field of an object of type B must be stored at the same
+      offset from the base of any object that belongs to a subtype of B
+    the VMT ptr must be present at the same offset from the base of 
+        any object of type B or one of its subclasses
+    the location of virtual function pointers within the VMT should remain
+        the same for all virtual functions of B across all subclasses of B.
+
+As a result, we must use the following layout for an object of type A
+defined as follows:
+
+class A: public B {
+      float f;
+      void h(); // Redefines h, but reuses implementation of G from B;
+      virtual void k();
+}
+
+A a;
+       a's layout:                           Virtual Method Table (VMT)  
+       +-------------+                            for class A            
+       |    i        |                           +-------------+         
+       |-------------|                    /----->|ptr to B's g |         
+       |    c        |                   /       |-------------|         
+       |-------------|                  /        |ptr to A's h |         
+       | VMT ptr  ---|-----------------/         |-------------|         
+       |-------------|                           | ptr to A's k|         
+       |  float f    |                           +-------------+         
+       +-------------+                
+                                      
+Note that in order to satisfy the constraint that VMT ptr appear at the
+same position in objects of type A and B, it is necessary for the data
+field f in A to appear after the VMT field.
+
+A couple of other points:
+a) non-virtual functions are statically dispatched, so they do not
+   appear in the VMT table
+b) when a virtual function f is NOT redefined in a subclass, the VMT table
+   for that class is initialized with an entry to the function f defined
+   its superclass.
