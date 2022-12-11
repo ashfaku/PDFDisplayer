@@ -1,0 +1,290 @@
+Components of Runtime Environment (RTE)
+
+Main components of runtime enviroment are:   
+1.Static area: is allocated at load/startup time. 
+Examples: global/static variables and load-time constants.
+
+2.Stack area: used for allocating local variables and to store
+procedure return addresses. More generally, any data that follows a 
+LIFO rule can  be stored on the stack.
+
+3.Heap: area that is allocated dynamically for data that does not follow
+the LIFO lifetime rule. Examples: all objects in Java, lists in
+Scheme. 
+
+Some languages use heap for everything. While C++ and JAVA use a
+combination of stack and heap.
+
+
+Layout for different components of the runtime environment:
+
+                    -------------------     
+        High       |      stack        |    
+       Address     -------------------     
+                   |                   |
+                   |    free space     |
+                   |                   |
+                    -------------------     
+                   |      heap         |    
+                    -------------------     
+                   |    static area    |   
+                    ------------------- 
+         Low       |     code area     |
+        Address     -------------------
+
+Note that the stack "grows down" --- at the beginning of the program
+execution, the stack is empty, the top of the stack is positioned at
+the highest possible address available to programs. As procedure calls
+are made and variables allocated on the stack, additional space is created
+on the stack by _decrementing_ the stack top. The size of the stack at
+any time is given by highest_address - stack_top.
+
+Also keep in mind that with today's OSes, memory addresses refer to
+virtual memory. We never talk about physical memory addresses, which
+are managed by the OS. 
+
+Procedures and the environment
+----------------------------------
+
+An Activation Record (AR) is created for each invocation of a procedure.
+Note that if a procedure is called multiple times, each call results
+in an independent AR. 
+
+Below is the structure of AR:
+                    -------------------     |
+                   |  return value     |    |
+                    -------------------     |
+                   | actual parameter  |    | 
+Frame Pointer ----> -------------------     |  Direction of stack growth
+                   |  local variables  |    |
+                    -------------------     |
+                   |temporary variables|    V
+                    -------------------    
+
+Frame pointer is also called Base Pointer (base of AR) or Environment
+pointer. It may be abbreviated as FP, BP or EP.
+
+Languages differ in terms of where ARs are allocated.
+In Fortran 77 ARs are allocated statically, which means that the data 
+on the AR for one call of a procedure will be overwritten by a subsequent
+call. This will be fine if the previous call is no longer active, but
+obviously won't work right if the previous call has not returned. As
+a result, this approach cannot support recursive functions.
+
+Functional languages (Scheme, ML) and some OO languages (Smalltalk) are
+heap-oriented: most data, including AR, may be allocated dynamically.
+
+Typical languages (Java, C, C++) allocate AR on the stack.
+
+Simple stack-based allocation
+------------------------------
+
+Local variables are allocated at a fixed offset on the stack. They are
+accessed using this constant offset from BP. 
+
+Example: to load a local variable at offset 12 into the 
+EBX register on x86 architecture, one would use an instruction such as
+    mov 0xc(%ebp),%ebx 
+
+Example: { int x; int y; { int z; } { int w; } }
+ 
+When you enter the block containing "z":    
+Base of AR (BP)-------->  --------------- 
+                          |      x        |    
+                           ---------------     
+                          |      y        |    
+                           ---------------     
+                          |      z        |   
+                           --------------- 
+                      
+When you exit the block containing "z":
+Base of AR (BP)-------->  --------------- 
+                          |      x        |    
+                           ---------------     
+                          |      y        |    
+                           ---------------     
+                          
+When you enter the block containing "w":
+Base of AR (BP)-------->  --------------- 
+                          |      x        |    
+                           ---------------     
+                          |      y        |    
+                           ---------------     
+                          |      w        |   
+                           --------------- 
+
+
+
+Steps involved in a procedure call
+Caller:
+1.Save registers.
+2.Evaluate actual parameters, push on the stack. 
+3.Push l-values for CBR, r-values in the case of CBV.
+4.Allocate space for return value on stack.
+5.Call: Save return address, jump to the beginning of called function.
+
+Callee
+1.Save BP (control link field in AR).
+1.Move SP to BP.
+3.Allocate storage for locals and temporaries (Decrement SP).
+4.Local variables accessed as [FP+k], parameters using [FP-l].
+
+
+
+Steps in return
+Callee
+1.Copy return value into its location on AR.
+2.Increment SP to deallocate locals/temporaries.
+3.Restore BP from Control link.
+4.Jump to return address on stack.
+
+Caller
+1.Copy return values and parameters.
+2.Pop paramters from stack.
+3.Restore saved registers.
+
+
+Steps involved in a procedure call
+----------------------------------
+Caller:
+1.Save registers.
+2.Evaluate actual parameters, push on the stack. 
+3.Push l-values for CBR, r-values in the case of CBV.
+4.Allocate space for return value on stack.
+5.Call: Save return address, jump to the beginning of called function.
+
+Callee
+1.Save BP (control link field in AR).
+1.Move SP to BP.
+3.Allocate storage for locals and temporaries (Decrement SP).
+4.Local variables accessed as [FP-k], parameters using [FP+l].
+
+
+
+Steps in return
+---------------
+Callee
+1.Copy return value into its location on AR.
+2.Increment SP to deallocate locals/temporaries.
+3.Restore BP from Control link.
+4.Jump to return address on stack.
+
+Caller
+1.Copy return values and parameters.
+2.Pop paramters from stack.
+3.Restore saved registers.
+
+Example:
+int x;
+void p(int y)
+{ int i = x;
+  char c; ...
+}
+void q(int a)
+{ int x;
+  p(1);
+}
+main()
+{ q(2);
+  return 0;
+}
+
+Diagram of run-time stack:
+
+    main's BP-->|------------------|<----------+
+    main's AR   |      temp        |           |
+                |------------------|           |
+                |       2          |<----------|---parameter to q
+                |------------------|           | 
+                |   Ret Addr       |           |Control link
+      q's BP--->|------------------|           |
+      q's AR    |        *---------+-----------+
+                |------------------|<----+     
+                |        X         |     |
+                |------------------|     |
+                |        1         |<----|-------parameter to p
+                |------------------|     |
+                |   Ret Add        |     |Control link
+      p's BP--->|------------------|     |
+      p's AR    |        *---------+-----+ 
+                |------------------|
+                |       i          |
+                |------------------|
+                |       c          |
+                |------------------|
+
+When p returns the reverse process takes place in the above diagram,
+local variables gets deallocated and returned to the point of calling.
+              
+Note: 
+** The same concept is known by three different names
+   Frame pointer(FP) ==  Base pointer(BP) ==  Environment pointer (EP)
+   Fp is term used in stacks.
+   Bp is term used in Intel architecture specifications.
+   EP is term used in our course text book.
+** Stack grows in downward direction. Heap grows in upward direction.
+** Global variables are in global area. They are not shown on the stack.
+** main returns 0 to the function(compiler generated code) which called main.
+
+
+Nested procedures
+----------------- 
+If no nested procedure then we only have two kinds of variables visible 
+inside any procedure (local & global).
+In case of nested procedure.
+Example:
+int p() {
+  int x = 1;
+  int  q(int y) {
+      ... x
+  }
+  q(3)
+}
+main() {
+   ...p(5)
+}
+
+
+Diagram of run-time stack:
+
+    main's BP-->|------------------|<----------+
+    main's AR   |       5          |           |
+                |------------------|           | 
+                |   Ret Addr       |           |Control link
+      p's BP--->|------------------|           |
+      p's AR    |        *---------+-----------+
+                |------------------|<----+<----+     
+                |       x=1        |     |     |
+                |------------------|     |     |
+                |        3         |     |     |
+                |------------------|     |     |
+                |   Ret Add        |     |Control link
+      q's BP--->|------------------|     |     |  
+      q's AR    |        *---------+-----+     |
+                |------------------|           | Access Link
+                |       *----------+-----------+
+                |------------------|
+ 
+
+
+Access link means that if you don't find any variable in current scope
+then follow the access link and find variable there. Using Access link has
+more overhead and is less efficient as compared to using only control
+links.
+
+Note: **Nested procedures are not allowed in JAVA and C because to avoid
+complication and we can always do away with nested procedures by using
+parameter passing mechanism. **Only benefit of having Nested procedures is
+to get access to variables of surrounding procedures without having to 
+pass these values explicitly as parameters. In C/JAVA, to have the same
+effect, you need to pass such variables explicitly as parameters. This
+is a relatively minor inconvenience, but makes the runtime implementation
+significantly more simple and efficient.
+
+Note that in general, an access link may point to the AR of a surrounding
+procedure that is arbitrarily deep in the stack. For instance, in the
+above example, if q is recursive, then the access links of all these
+recursive calls to q will all point to the AR for p.
+
+
+

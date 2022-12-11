@@ -1,0 +1,1 @@
+Note: I couldn't find a PDF of the 3rd edition of the book, 2nd was closest I could see.
