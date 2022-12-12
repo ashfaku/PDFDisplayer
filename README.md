@@ -1,6 +1,6 @@
 WIP React Router application to display pdfs in a natural manner, instead of just flat text on a screen
 
-Notes for myself)
+Notes for myself) <br>
     When running locally)
         Port is 3000, unless you manually change it somehow
         Add ```"homepage": "http://localhost:<port>/#" to package.json```
