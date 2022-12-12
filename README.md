@@ -2,13 +2,13 @@ WIP React Router application to display pdfs in a natural manner, instead of jus
 
 When running locally  | When hosting to gh-pages
 --------------------  | ------------------------
-Content Cell          | Content Cell
+Port is 3000, unless you manually change it somehow          | Content Cell
 Content Cell          | Content Cell
 
 
 Notes for myself) <br>
     
-        Port is 3000, unless you manually change it somehow <br>
+        
         Add ```"homepage": "http://localhost:<port>/#" to package.json``` <br>
         Use HashRouter instead of BrowserRouter <br>
         Use ```window.location.hash``` instead of ```window.location.search``` when trying to get query parameters, and parse them like you would any string with .split() <br>
