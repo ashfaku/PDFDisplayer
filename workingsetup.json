@@ -1,6 +1,5 @@
 {
   "name": "react-pdf-example",
-  "homepage": "https://ashfaku.github.io/PDFDisplayer/#",
   "version": "0.1.0",
   "private": true,
   "dependencies": {

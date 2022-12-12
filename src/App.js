@@ -81,9 +81,9 @@ function App() {
   }, []);
   */
   return ( 
-    <Router basename = '/'>
+    <Router>
         <Routes>
-            <Route exact path = '' element = {<div>{folder}</div>} />
+            <Route exact path = "/" element = {<div>{folder}</div>} />
             <Route exact path = "/pdfs" element = {<PDFPage />} />
             <Route element = {<div>Not found</div>} />
         </Routes>
