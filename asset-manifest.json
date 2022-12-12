@@ -1,16 +1,16 @@
 {
   "files": {
-    "main.css": "/static/css/main.2467168f.css",
-    "main.js": "/static/js/main.8b57c21d.js",
-    "static/js/787.c3693e75.chunk.js": "/static/js/787.c3693e75.chunk.js",
-    "pdf.worker.js": "/fba171de7bad31878d85d80a4083a09d.js",
-    "index.html": "/index.html",
-    "main.2467168f.css.map": "/static/css/main.2467168f.css.map",
-    "main.8b57c21d.js.map": "/static/js/main.8b57c21d.js.map",
-    "787.c3693e75.chunk.js.map": "/static/js/787.c3693e75.chunk.js.map"
+    "main.css": "/PDFDisplayer/static/css/main.2467168f.css",
+    "main.js": "/PDFDisplayer/static/js/main.e2c19e6c.js",
+    "static/js/787.c3693e75.chunk.js": "/PDFDisplayer/static/js/787.c3693e75.chunk.js",
+    "pdf.worker.js": "/PDFDisplayer/fba171de7bad31878d85d80a4083a09d.js",
+    "index.html": "/PDFDisplayer/index.html",
+    "main.2467168f.css.map": "/PDFDisplayer/static/css/main.2467168f.css.map",
+    "main.e2c19e6c.js.map": "/PDFDisplayer/static/js/main.e2c19e6c.js.map",
+    "787.c3693e75.chunk.js.map": "/PDFDisplayer/static/js/787.c3693e75.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.2467168f.css",
-    "static/js/main.8b57c21d.js"
+    "static/js/main.e2c19e6c.js"
   ]
 }
